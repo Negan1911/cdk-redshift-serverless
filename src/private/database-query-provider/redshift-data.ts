@@ -10,6 +10,8 @@ export async function executeStatement(statement: string, workGroupProps: WorkGr
     Database: workGroupProps.databaseName,
     Sql: statement,
   }).promise();
+
+  console.log('Executing Statement: ', statement);
   
   if (!executedStatement.Id) {
     throw new Error('Service error: Statement execution did not return a statement ID');
