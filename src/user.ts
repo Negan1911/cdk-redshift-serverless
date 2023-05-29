@@ -115,7 +115,7 @@ export class User extends UserBase {
       readonly username = attrs.username;
       readonly password = attrs.password;
       readonly workGroup = attrs.workGroup;
-      readonly databaseName = attrs.databaseName;
+      readonly databaseName = attrs.namespace.attrNamespaceDbName;
       protected readonly databaseProps = attrs;
     }(scope, id);
   }
@@ -132,7 +132,7 @@ export class User extends UserBase {
 
     this.databaseProps = props;
     this.workGroup = props.workGroup;
-    this.databaseName = props.databaseName;
+    this.databaseName = props.namespace.attrNamespaceDbName;
 
     const username = props.username ?? cdk.Names.uniqueId(this).toLowerCase();
     

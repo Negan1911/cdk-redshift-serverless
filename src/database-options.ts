@@ -10,7 +10,7 @@ export interface DatabaseOptions {
   readonly workGroup: redshift.CfnWorkgroup;
 
   /**
-   * The name of the database.
+   * Namespace containing the database.
    */
-  readonly databaseName: string;
+  readonly namespace: redshift.CfnNamespace;
 }

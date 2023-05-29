@@ -41,7 +41,10 @@ export class DatabaseQuery<HandlerProps> extends Construct implements iam.IGrant
 
     handler.addToRolePolicy(new iam.PolicyStatement({
       actions: ['redshift-serverless:GetCredentials'],
-      resources: [props.workGroup.attrWorkgroupWorkgroupArn],
+      resources: [
+        `arn:${cdk.Aws.PARTITION}:redshift:${cdk.Aws.REGION}:${cdk.Aws.ACCOUNT_ID}:dbname:${props.workGroup.attrWorkgroupWorkgroupName}/${props.namespace.attrNamespaceDbName}`,
+        `arn:${cdk.Aws.PARTITION}:redshift:${cdk.Aws.REGION}:${cdk.Aws.ACCOUNT_ID}:dbuser:${props.workGroup.attrWorkgroupWorkgroupName}/${props.namespace.adminUsername}`,
+      ]
     }));
 
     handler.addToRolePolicy(new iam.PolicyStatement({
@@ -55,8 +58,9 @@ export class DatabaseQuery<HandlerProps> extends Construct implements iam.IGrant
 
     const queryHandlerProps: DatabaseQueryHandlerProps & HandlerProps = {
       handler: props.handler,
+      username: props.namespace.adminUsername!,
       workGroupName: props.workGroup.workgroupName,
-      databaseName: props.databaseName,
+      databaseName: props.namespace.attrNamespaceDbName,
       ...props.properties,
     };
     this.resource = new cdk.CustomResource(this, 'Resource', {
@@ -80,5 +84,9 @@ export class DatabaseQuery<HandlerProps> extends Construct implements iam.IGrant
 
   public getAttString(attributeName: string): string {
     return this.resource.getAttString(attributeName);
+  }
+
+  private getAdminUser(props: DatabaseOptions): string {
+    return props.namespace.attrNamespaceAdminUsername;
   }
 }

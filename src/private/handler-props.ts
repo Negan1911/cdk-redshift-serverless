@@ -4,6 +4,7 @@ export interface DatabaseQueryHandlerProps {
   readonly handler: string;
   readonly workGroupName: string;
   readonly databaseName: string;
+  readonly username: string;
 }
 
 export interface UserHandlerProps {
