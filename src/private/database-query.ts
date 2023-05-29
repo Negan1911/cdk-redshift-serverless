@@ -38,6 +38,12 @@ export class DatabaseQuery<HandlerProps> extends Construct implements iam.IGrant
       uuid: '3de5bea7-27da-4796-8662-5efb56431b5f',
       lambdaPurpose: 'Query Redshift Database',
     });
+
+    handler.addToRolePolicy(new iam.PolicyStatement({
+      actions: ['redshift-serverless:GetCredentials'],
+      resources: [props.workGroup.attrWorkgroupWorkgroupArn],
+    }));
+
     handler.addToRolePolicy(new iam.PolicyStatement({
       actions: ['redshift-data:DescribeStatement', 'redshift-data:ExecuteStatement'],
       resources: ['*'],
@@ -49,7 +55,7 @@ export class DatabaseQuery<HandlerProps> extends Construct implements iam.IGrant
 
     const queryHandlerProps: DatabaseQueryHandlerProps & HandlerProps = {
       handler: props.handler,
-      workGroupName: props.workGroupName,
+      workGroupName: props.workGroup.workgroupName,
       databaseName: props.databaseName,
       ...props.properties,
     };

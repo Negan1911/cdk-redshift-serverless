@@ -241,7 +241,7 @@ export class Table extends TableBase {
     }
 
     this.tableColumns = this.configureTableColumns(props.tableColumns);
-    this.workGroupName = props.workGroupName;
+    this.workGroupName = props.workGroup.workgroupName;
     this.databaseName = props.databaseName;
 
     const useColumnIds = !!cdk.FeatureFlags.of(this).isEnabled(REDSHIFT_COLUMN_ID);

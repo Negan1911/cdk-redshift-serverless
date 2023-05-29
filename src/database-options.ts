@@ -1,11 +1,13 @@
+import * as redshift from 'aws-cdk-lib/aws-redshiftserverless'
+
 /**
  * Properties for accessing a Redshift database
  */
 export interface DatabaseOptions {
   /**
-   * Name of the workgroup containing the database.
+   * Workgroup containing the database.
    */
-  readonly workGroupName: string;
+  readonly workGroup: redshift.CfnWorkgroup;
 
   /**
    * The name of the database.

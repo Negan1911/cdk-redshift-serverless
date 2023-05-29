@@ -60,7 +60,7 @@ const redshiftWorkgroup = new redshift.CfnWorkgroup(this, "RedshiftWorkgroup", {
 ```ts
 const table = new Table(this, "MyTable", {
   tableName: "my-table",
-  workGroupName: redshiftWorkgroup.workgroupName, // 👈 Reference your workgroup here.
+  workGroup: redshiftWorkgroup, // 👈 Reference your workgroup here.
   databaseName: redshiftNamespace.dbName, // 👈 Reference your Db name (from namespace) here.
   tableColumns: [
     { name: "col1", dataType: "varchar(4)", distKey: true },
