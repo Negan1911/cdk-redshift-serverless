@@ -1,4 +1,3 @@
-/* eslint-disable-next-line import/no-unresolved */
 import * as AWSLambda from 'aws-lambda';
 import { executeStatement } from './redshift-data';
 import { WorkGroupProps } from './types';
@@ -8,22 +7,22 @@ import { TablePrivilege, UserTablePrivilegesHandlerProps } from '../handler-prop
 export async function handler(props: UserTablePrivilegesHandlerProps & WorkGroupProps, event: AWSLambda.CloudFormationCustomResourceEvent) {
   const username = props.username;
   const tablePrivileges = props.tablePrivileges;
-  const clusterProps = props;
+  const workGroupProps = props;
 
   if (event.RequestType === 'Create') {
-    await grantPrivileges(username, tablePrivileges, clusterProps);
-    return { PhysicalResourceId: makePhysicalId(username, clusterProps, event.RequestId) };
+    await grantPrivileges(username, tablePrivileges, workGroupProps);
+    return { PhysicalResourceId: makePhysicalId(username, workGroupProps, event.RequestId) };
   } else if (event.RequestType === 'Delete') {
-    await revokePrivileges(username, tablePrivileges, clusterProps);
+    await revokePrivileges(username, tablePrivileges, workGroupProps);
     return;
   } else if (event.RequestType === 'Update') {
     const { replace } = await updatePrivileges(
       username,
       tablePrivileges,
-      clusterProps,
+      workGroupProps,
       event.OldResourceProperties as UserTablePrivilegesHandlerProps & WorkGroupProps,
     );
-    const physicalId = replace ? makePhysicalId(username, clusterProps, event.RequestId) : event.PhysicalResourceId;
+    const physicalId = replace ? makePhysicalId(username, workGroupProps, event.RequestId) : event.PhysicalResourceId;
     return { PhysicalResourceId: physicalId };
   } else {
     /* eslint-disable-next-line dot-notation */
@@ -33,13 +32,13 @@ export async function handler(props: UserTablePrivilegesHandlerProps & WorkGroup
 
 async function revokePrivileges(username: string, tablePrivileges: TablePrivilege[], workGroupProps: WorkGroupProps) {
   await Promise.all(tablePrivileges.map(({ tableName, actions }) => {
-    return executeStatement(`REVOKE ${actions.join(', ')} ON "${tableName}" FROM "${username}"`, workGroupProps);
+    return executeStatement(`REVOKE ${actions.join(', ')} ON ${tableName} FROM ${username}`, workGroupProps);
   }));
 }
 
 async function grantPrivileges(username: string, tablePrivileges: TablePrivilege[], workGroupProps: WorkGroupProps) {
   await Promise.all(tablePrivileges.map(({ tableName, actions }) => {
-    return executeStatement(`GRANT ${actions.join(', ')} ON "${tableName}" TO "${username}"`, workGroupProps);
+    return executeStatement(`GRANT ${actions.join(', ')} ON ${tableName} TO ${username}`, workGroupProps);
   }));
 }
 
@@ -49,8 +48,8 @@ async function updatePrivileges(
   workGroupProps: WorkGroupProps,
   oldResourceProperties: UserTablePrivilegesHandlerProps & WorkGroupProps,
 ): Promise<{ replace: boolean }> {
-  const oldClusterProps = oldResourceProperties;
-  if (workGroupProps.workGroupName !== oldClusterProps.workGroupName || workGroupProps.databaseName !== oldClusterProps.databaseName) {
+  const oldWorkGroupProps = oldResourceProperties;
+  if (workGroupProps.workGroupName !== oldWorkGroupProps.workGroupName || workGroupProps.databaseName !== oldWorkGroupProps.databaseName) {
     await grantPrivileges(username, tablePrivileges, workGroupProps);
     return { replace: true };
   }

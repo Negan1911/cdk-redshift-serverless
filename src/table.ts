@@ -275,40 +275,6 @@ export class Table extends TableBase {
     this.tableName = this.resource.ref;
   }
 
-  public addPrivilegesToRole(role: iam.IRole, ...actions: TableAction[]): void {
-    if (!this.privileges)
-      this.privileges = {};
-
-    const name = `IAMR:${role.roleName}`
-    if (!this.privileges[name]) {
-      this.privileges[name] = new UserTablePrivileges(this, 'TablePrivileges', {
-        workGroup: this.workGroup,
-        databaseName: this.databaseName,
-        userName: name,
-        privileges: [{ table: this, actions }],
-      });
-    }
-
-    this.privileges[name].addPrivileges(this, ...actions);
-  }
-
-  public addPrivilegesToUser(user: iam.IUser, ...actions: TableAction[]): void {
-    if (!this.privileges)
-      this.privileges = {};
-
-    const name = `IAM:${user.userName}`
-    if (!this.privileges[name]) {
-      this.privileges[name] = new UserTablePrivileges(this, 'TablePrivileges', {
-        workGroup: this.workGroup,
-        databaseName: this.databaseName,
-        userName: name,
-        privileges: [{ table: this, actions }],
-      });
-    }
-
-    this.privileges[name].addPrivileges(this, ...actions);
-  }
-
   /**
    * Apply the given removal policy to this resource
    *

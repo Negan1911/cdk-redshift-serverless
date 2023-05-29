@@ -5,6 +5,7 @@ import { HandlerName } from './database-query-provider/handler-name';
 import { TablePrivilege as SerializedTablePrivilege, UserTablePrivilegesHandlerProps } from './handler-props';
 import { DatabaseOptions } from '../database-options';
 import { ITable, TableAction } from '../table';
+import { IUser } from '../user';
 
 /**
  * The Redshift table and action that make up a privilege that can be granted to a Redshift user.
@@ -28,7 +29,7 @@ export interface UserTablePrivilegesProps extends DatabaseOptions {
   /**
    * The user to which privileges will be granted.
    */
-  readonly userName: string;
+  readonly user: IUser;
 
   /**
    * The privileges to be granted.
@@ -58,7 +59,7 @@ export class UserTablePrivileges extends Construct {
       ...props,
       handler: HandlerName.UserTablePrivileges,
       properties: {
-        username: props.userName,
+        username: props.user.username,
         tablePrivileges: cdk.Lazy.any({
           produce: () => {
             const reducedPrivileges = this.privileges.reduce((privileges, { table, actions }) => {
