@@ -1,9 +1,7 @@
 import * as kms from 'aws-cdk-lib/aws-kms';
-import * as secretsmanager from 'aws-cdk-lib/aws-secretsmanager';
 import * as redshift from 'aws-cdk-lib/aws-redshiftserverless';
 import * as cdk from 'aws-cdk-lib';
 import { Construct, IConstruct } from 'constructs';
-import { DatabaseSecret } from './database-secret';
 import { DatabaseOptions } from './database-options';
 import { DatabaseQuery } from './private/database-query';
 import { HandlerName } from './private/database-query-provider/handler-name';
@@ -49,11 +47,6 @@ export interface IUser extends IConstruct {
   readonly username: string;
 
   /**
-   * The password of the user.
-   */
-  readonly password: cdk.SecretValue;
-
-  /**
    * The workgroup where the table is located.
    */
   readonly workGroup: redshift.CfnWorkgroup;
@@ -88,7 +81,6 @@ export interface UserAttributes extends DatabaseOptions {
 
 abstract class UserBase extends Construct implements IUser {
   abstract readonly username: string;
-  abstract readonly password: cdk.SecretValue;
   abstract readonly workGroup: redshift.CfnWorkgroup;
   abstract readonly databaseName: string;
 
@@ -129,16 +121,9 @@ export class User extends UserBase {
   }
 
   readonly username: string;
-  readonly password: cdk.SecretValue;
   readonly workGroup: redshift.CfnWorkgroup;
   readonly databaseName: string;
   protected databaseProps: DatabaseOptions;
-
-  /**
-   * The Secrets Manager secret of the user.
-   * @attribute
-   */
-  public readonly secret: secretsmanager.ISecret;
 
   private resource: DatabaseQuery<UserHandlerProps>;
 
@@ -150,26 +135,14 @@ export class User extends UserBase {
     this.databaseName = props.databaseName;
 
     const username = props.username ?? cdk.Names.uniqueId(this).toLowerCase();
-    const secret = new DatabaseSecret(this, 'Secret', {
-      username,
-      encryptionKey: props.encryptionKey,
-    });
     
-    this.password = secret.secretValueFromJson('password');
-
     this.resource = new DatabaseQuery<UserHandlerProps>(this, 'Resource', {
       ...this.databaseProps,
       handler: HandlerName.User,
-      properties: {
-        username,
-        passwordSecretArn: secret.secretArn,
-      },
+      properties: { username },
     });
     
-    secret.grantRead(this.resource);
-
     this.username = this.resource.getAttString('username');
-    this.secret = secret;
   }
 
   /**

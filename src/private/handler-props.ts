@@ -8,7 +8,6 @@ export interface DatabaseQueryHandlerProps {
 
 export interface UserHandlerProps {
   readonly username: string;
-  readonly passwordSecretArn: string;
 }
 
 export interface PermissionProps {
