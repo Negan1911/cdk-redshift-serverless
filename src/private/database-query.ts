@@ -42,6 +42,7 @@ export class DatabaseQuery<HandlerProps> extends Construct implements iam.IGrant
     handler.addToRolePolicy(new iam.PolicyStatement({
       actions: ['redshift-serverless:GetCredentials'],
       resources: [
+        props.workGroup.attrWorkgroupWorkgroupArn,
         `arn:${cdk.Aws.PARTITION}:redshift:${cdk.Aws.REGION}:${cdk.Aws.ACCOUNT_ID}:dbname:${props.workGroup.attrWorkgroupWorkgroupName}/${props.namespace.attrNamespaceDbName}`,
         `arn:${cdk.Aws.PARTITION}:redshift:${cdk.Aws.REGION}:${cdk.Aws.ACCOUNT_ID}:dbuser:${props.workGroup.attrWorkgroupWorkgroupName}/${props.namespace.adminUsername}`,
       ]
@@ -58,7 +59,7 @@ export class DatabaseQuery<HandlerProps> extends Construct implements iam.IGrant
 
     const queryHandlerProps: DatabaseQueryHandlerProps & HandlerProps = {
       handler: props.handler,
-      username: props.namespace.adminUsername!,
+      username: props.namespace.attrNamespaceAdminUsername,
       workGroupName: props.workGroup.workgroupName,
       databaseName: props.namespace.attrNamespaceDbName,
       ...props.properties,

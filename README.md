@@ -27,7 +27,7 @@ yarn add cdk-redshift-serverless
 2. Import it in your CDK stack:
 
 ```ts
-import { Table } from "cdk-redshift-serverless";
+import { Table, User, TableAction } from "cdk-redshift-serverless";
 ```
 
 3. Make sure you have your Namespace and Workgroup Set:
@@ -61,7 +61,7 @@ const redshiftWorkgroup = new redshift.CfnWorkgroup(this, "RedshiftWorkgroup", {
 const table = new Table(this, "MyTable", {
   tableName: "my-table",
   workGroup: redshiftWorkgroup, // 👈 Reference your workgroup here.
-  databaseName: redshiftNamespace.dbName, // 👈 Reference your Db name (from namespace) here.
+  namespace: redshiftNamespace, // 👈 Reference your Db name (from namespace) here.
   tableColumns: [
     { name: "col1", dataType: "varchar(4)", distKey: true },
     { name: "col2", dataType: "float" },
@@ -69,4 +69,20 @@ const table = new Table(this, "MyTable", {
 });
 ```
 
-5. When you deploy, that table it's going to be generated.
+5. Create the user by calling:
+
+```ts
+const redshiftUser = new User(this, "RedshiftUser", {
+  workGroup: redshiftWorkgroup,
+  namespace: redshiftNamespace,
+  encryptionKey: redshiftKmsKey,
+});
+```
+
+6. Grant the user permissions to the table by calling:
+
+```ts
+redshiftUser.addTablePrivileges(table, TableAction.INSERT);
+```
+
+7. When you deploy, that table and user it's going to be generated.
