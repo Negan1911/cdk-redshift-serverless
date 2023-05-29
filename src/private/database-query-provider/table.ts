@@ -44,7 +44,7 @@ async function createTable(
   const tableName = tableNamePrefix + tableNameSuffix;
   const tableColumnsString = tableColumns.map(column => `${column.name} ${column.dataType}${getEncodingColumnString(column)}`).join();
 
-  let statement = `CREATE TABLE ${tableName} (${tableColumnsString})`;
+  let statement = `CREATE TABLE "${tableName}" (${tableColumnsString})`;
 
   if (tableAndWorkGroupProps.distStyle) {
     statement += ` DISTSTYLE ${tableAndWorkGroupProps.distStyle}`;
@@ -65,18 +65,18 @@ async function createTable(
 
   for (const column of tableColumns) {
     if (column.comment) {
-      await executeStatement(`COMMENT ON COLUMN ${tableName}.${column.name} IS '${column.comment}'`, tableAndWorkGroupProps);
+      await executeStatement(`COMMENT ON COLUMN "${tableName}.${column.name}" IS '${column.comment}'`, tableAndWorkGroupProps);
     }
   }
   if (tableAndWorkGroupProps.tableComment) {
-    await executeStatement(`COMMENT ON TABLE ${tableName} IS '${tableAndWorkGroupProps.tableComment}'`, tableAndWorkGroupProps);
+    await executeStatement(`COMMENT ON TABLE "${tableName}" IS '${tableAndWorkGroupProps.tableComment}'`, tableAndWorkGroupProps);
   }
 
   return tableName;
 }
 
 async function dropTable(tableName: string, WorkGroupProps: WorkGroupProps) {
-  await executeStatement(`DROP TABLE ${tableName}`, WorkGroupProps);
+  await executeStatement(`DROP TABLE "${tableName}"`, WorkGroupProps);
 }
 
 async function updateTable(
@@ -198,7 +198,7 @@ async function updateTable(
   const oldComment = oldResourceProperties.tableComment;
   const newComment = tableAndWorkGroupProps.tableComment;
   if (oldComment !== newComment) {
-    alterationStatements.push(`COMMENT ON TABLE ${tableName} IS ${newComment ? `'${newComment}'` : 'NULL'}`);
+    alterationStatements.push(`COMMENT ON TABLE "${tableName}" IS ${newComment ? `'${newComment}'` : 'NULL'}`);
   }
 
   await Promise.all(alterationStatements.map(statement => executeStatement(statement, tableAndWorkGroupProps)));

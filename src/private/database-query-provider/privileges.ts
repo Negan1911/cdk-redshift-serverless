@@ -33,13 +33,13 @@ export async function handler(props: UserTablePrivilegesHandlerProps & WorkGroup
 
 async function revokePrivileges(username: string, tablePrivileges: TablePrivilege[], workGroupProps: WorkGroupProps) {
   await Promise.all(tablePrivileges.map(({ tableName, actions }) => {
-    return executeStatement(`REVOKE ${actions.join(', ')} ON ${tableName} FROM ${username}`, workGroupProps);
+    return executeStatement(`REVOKE ${actions.join(', ')} ON "${tableName}" FROM "${username}"`, workGroupProps);
   }));
 }
 
 async function grantPrivileges(username: string, tablePrivileges: TablePrivilege[], workGroupProps: WorkGroupProps) {
   await Promise.all(tablePrivileges.map(({ tableName, actions }) => {
-    return executeStatement(`GRANT ${actions.join(', ')} ON ${tableName} TO ${username}`, workGroupProps);
+    return executeStatement(`GRANT ${actions.join(', ')} ON "${tableName}" TO "${username}"`, workGroupProps);
   }));
 }
 
