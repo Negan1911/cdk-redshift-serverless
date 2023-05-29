@@ -2,9 +2,11 @@
 import * as AWSLambda from 'aws-lambda';
 import { HandlerName } from './handler-name';
 import { handler as manageTable } from './table';
+import { handler as managePrivileges } from './privileges';
 
 const HANDLERS: { [key in HandlerName]: ((props: any, event: AWSLambda.CloudFormationCustomResourceEvent) => Promise<any>) } = {
   [HandlerName.Table]: manageTable,
+  [HandlerName.UserTablePrivileges]: managePrivileges,
 };
 
 export async function handler(event: AWSLambda.CloudFormationCustomResourceEvent) {

@@ -1,12 +1,14 @@
 /* eslint-disable import/no-extraneous-dependencies */
 import * as cdk from 'aws-cdk-lib';
-import { REDSHIFT_COLUMN_ID } from 'aws-cdk-lib/cx-api';
+import * as iam from 'aws-cdk-lib/aws-iam';
 import { Construct, IConstruct } from 'constructs';
 import { DatabaseOptions } from './database-options';
+import { REDSHIFT_COLUMN_ID } from 'aws-cdk-lib/cx-api';
 import { DatabaseQuery } from './private/database-query';
+import { UserTablePrivileges } from './private/privileges';
+import { TableHandlerProps } from './private/handler-props';
 import { HandlerName } from './private/database-query-provider/handler-name';
 import { getDistKeyColumn, getSortKeyColumns } from './private/database-query-provider/util';
-import { TableHandlerProps } from './private/handler-props';
 
 /**
  * An action that a Redshift user can be granted privilege to perform on a table.
@@ -211,6 +213,11 @@ abstract class TableBase extends Construct implements ITable {
  */
 export class Table extends TableBase {
   /**
+   * The tables that user will have access to
+   */
+  private privileges?: Record<string, UserTablePrivileges> = {};
+
+  /**
    * Specify a Redshift table using a table name and schema that already exists.
    */
   static fromTableAttributes(scope: Construct, id: string, attrs: TableAttributes): ITable {
@@ -226,6 +233,7 @@ export class Table extends TableBase {
   readonly tableColumns: Column[];
   readonly workGroupName: string;
   readonly databaseName: string;
+  private workGroup: TableProps['workGroup'];
 
   private resource: DatabaseQuery<TableHandlerProps>;
 
@@ -240,6 +248,7 @@ export class Table extends TableBase {
       this.validateSortStyle(props.sortStyle, props.tableColumns);
     }
 
+    this.workGroup = props.workGroup;
     this.tableColumns = this.configureTableColumns(props.tableColumns);
     this.workGroupName = props.workGroup.workgroupName;
     this.databaseName = props.databaseName;
@@ -264,6 +273,40 @@ export class Table extends TableBase {
     });
 
     this.tableName = this.resource.ref;
+  }
+
+  public addPrivilegesToRole(role: iam.IRole, ...actions: TableAction[]): void {
+    if (!this.privileges)
+      this.privileges = {};
+
+    const name = `IAMR:${role.roleName}`
+    if (!this.privileges[name]) {
+      this.privileges[name] = new UserTablePrivileges(this, 'TablePrivileges', {
+        workGroup: this.workGroup,
+        databaseName: this.databaseName,
+        userName: name,
+        privileges: [{ table: this, actions }],
+      });
+    }
+
+    this.privileges[name].addPrivileges(this, ...actions);
+  }
+
+  public addPrivilegesToUser(user: iam.IUser, ...actions: TableAction[]): void {
+    if (!this.privileges)
+      this.privileges = {};
+
+    const name = `IAM:${user.userName}`
+    if (!this.privileges[name]) {
+      this.privileges[name] = new UserTablePrivileges(this, 'TablePrivileges', {
+        workGroup: this.workGroup,
+        databaseName: this.databaseName,
+        userName: name,
+        privileges: [{ table: this, actions }],
+      });
+    }
+
+    this.privileges[name].addPrivileges(this, ...actions);
   }
 
   /**

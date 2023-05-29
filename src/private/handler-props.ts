@@ -6,7 +6,7 @@ export interface DatabaseQueryHandlerProps {
   readonly databaseName: string;
 }
 
-export interface UserHandlerProps {
+export interface PermissionProps {
   readonly username: string;
   readonly passwordSecretArn: string;
 }
