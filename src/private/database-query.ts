@@ -43,8 +43,8 @@ export class DatabaseQuery<HandlerProps> extends Construct implements iam.IGrant
       actions: ['redshift-serverless:GetCredentials'],
       resources: [
         props.workGroup.attrWorkgroupWorkgroupArn,
-        `arn:${cdk.Aws.PARTITION}:redshift:${cdk.Aws.REGION}:${cdk.Aws.ACCOUNT_ID}:dbname:${props.workGroup.attrWorkgroupWorkgroupName}/${props.namespace.attrNamespaceDbName}`,
-        `arn:${cdk.Aws.PARTITION}:redshift:${cdk.Aws.REGION}:${cdk.Aws.ACCOUNT_ID}:dbuser:${props.workGroup.attrWorkgroupWorkgroupName}/${props.namespace.adminUsername}`,
+        `arn:${cdk.Aws.PARTITION}:redshift-serverless:${cdk.Aws.REGION}:${cdk.Aws.ACCOUNT_ID}:dbname:${props.workGroup.attrWorkgroupWorkgroupName}/${props.namespace.attrNamespaceDbName}`,
+        `arn:${cdk.Aws.PARTITION}:redshift-serverless:${cdk.Aws.REGION}:${cdk.Aws.ACCOUNT_ID}:dbuser:${props.workGroup.attrWorkgroupWorkgroupName}/${props.namespace.adminUsername}`,
       ]
     }));
 
