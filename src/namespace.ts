@@ -77,13 +77,13 @@ export interface NamespaceProps {
      *
      * @link http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-redshiftserverless-namespace.html#cfn-redshiftserverless-namespace-adminusername
      */
-  adminUsername: string | undefined;
+  adminUsername?: string;
   /**
    * The password of the administrator for the primary database created in the namespace.
    *
    * @link http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-redshiftserverless-namespace.html#cfn-redshiftserverless-namespace-adminuserpassword
    */
-  adminUserPassword: string | undefined;
+  adminUserPassword?: string;
 
   /**
      * The name of the primary database created in the namespace.
@@ -224,7 +224,7 @@ export class Namespace extends NamespaceBase {
    */
   readonly tags: cdk.CfnTag[];
   
-  readonly secret?: secretsmanager.ISecret; 
+  readonly adminUser: secretsmanager.ISecret; 
 
   /**
    * The underlying Namespace
@@ -247,7 +247,7 @@ export class Namespace extends NamespaceBase {
 
     const removalPolicy = props.removalPolicy ?? RemovalPolicy.RETAIN;
 
-    this.secret = props.adminUserPassword
+    this.adminUser = props.adminUserPassword
       ? new secretsmanager.Secret(this, 'Secret', {
         secretObjectValue: {
           username: SecretValue.unsafePlainText(props.adminUsername || 'admin'),
@@ -260,8 +260,8 @@ export class Namespace extends NamespaceBase {
 
     this.namespace = new redshift.CfnNamespace(this, 'Resource', {
       namespaceName: this.namespaceName,
-      adminUsername: this.secret?.secretValueFromJson('username').unsafeUnwrap(),
-      adminUserPassword: this.secret?.secretValueFromJson('password').unsafeUnwrap(),
+      adminUsername: this.adminUser?.secretValueFromJson('username').unsafeUnwrap(),
+      adminUserPassword: this.adminUser?.secretValueFromJson('password').unsafeUnwrap(),
       dbName: this.dbName,
       defaultIamRoleArn: this.defaultIamRole?.roleArn,
       finalSnapshotName: this.finalSnapshotName,
