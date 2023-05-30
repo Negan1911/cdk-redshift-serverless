@@ -69,14 +69,14 @@ async function createTable(
     }
   }
   if (tableAndNamespaceProps.tableComment) {
-    await executeStatement(`COMMENT ON TABLE ${tableName} IS '${tableAndNamespaceProps.tableComment}'`, tableAndNamespaceProps);
+    await executeStatement(`COMMENT ON TABLE "${tableName}" IS '${tableAndNamespaceProps.tableComment}'`, tableAndNamespaceProps);
   }
 
   return tableName;
 }
 
 async function dropTable(tableName: string, namespaceProps: NamespaceProps) {
-  await executeStatement(`DROP TABLE ${tableName}`, namespaceProps);
+  await executeStatement(`DROP TABLE "${tableName}"`, namespaceProps);
 }
 
 async function updateTable(

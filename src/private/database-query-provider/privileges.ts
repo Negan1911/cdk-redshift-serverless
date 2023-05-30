@@ -33,13 +33,13 @@ export async function handler(props: UserTablePrivilegesHandlerProps & Namespace
 
 async function revokePrivileges(username: string, tablePrivileges: TablePrivilege[], namespaceProps: NamespaceProps) {
   await Promise.all(tablePrivileges.map(({ tableName, actions }) => {
-    return executeStatement(`REVOKE ${actions.join(', ')} ON ${tableName} FROM ${username}`, namespaceProps);
+    return executeStatement(`REVOKE ${actions.join(', ')} ON "${tableName}" FROM "${username}"`, namespaceProps);
   }));
 }
 
 async function grantPrivileges(username: string, tablePrivileges: TablePrivilege[], namespaceProps: NamespaceProps) {
   await Promise.all(tablePrivileges.map(({ tableName, actions }) => {
-    return executeStatement(`GRANT ${actions.join(', ')} ON ${tableName} TO ${username}`, namespaceProps);
+    return executeStatement(`GRANT ${actions.join(', ')} ON "${tableName}" TO "${username}"`, namespaceProps);
   }));
 }
 

@@ -27,11 +27,11 @@ export async function handler(props: UserGenericProps & NamespaceProps, event: A
 }
 
 async function dropUser(username: string, namespaceProps: NamespaceProps) {
-  await executeStatement(`DROP USER ${username}`, namespaceProps);
+  await executeStatement(`DROP USER "${username}"`, namespaceProps);
 }
 
 async function createUser(username: string, namespaceProps: NamespaceProps) {
-  await executeStatement(`CREATE USER ${username} PASSWORD DISABLE`, namespaceProps);
+  await executeStatement(`CREATE USER "${username}" PASSWORD DISABLE`, namespaceProps);
 }
 
 async function updateUser(

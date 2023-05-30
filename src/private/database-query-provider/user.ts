@@ -31,13 +31,13 @@ export async function handler(props: UserHandlerProps & NamespaceProps, event: A
 }
 
 async function dropUser(username: string, namespaceProps: NamespaceProps) {
-  await executeStatement(`DROP USER ${username}`, namespaceProps);
+  await executeStatement(`DROP USER "${username}"`, namespaceProps);
 }
 
 async function createUser(username: string, passwordSecretArn: string, namespaceProps: NamespaceProps) {
   const password = await getPasswordFromSecret(passwordSecretArn);
 
-  await executeStatement(`CREATE USER ${username} PASSWORD '${password}'`, namespaceProps);
+  await executeStatement(`CREATE USER "${username}" PASSWORD '${password}'`, namespaceProps);
 }
 
 async function updateUser(
@@ -63,7 +63,7 @@ async function updateUser(
   }
 
   if (password !== oldPassword) {
-    await executeStatement(`ALTER USER ${username} PASSWORD '${password}'`, namespaceProps);
+    await executeStatement(`ALTER USER "${username}" PASSWORD '${password}'`, namespaceProps);
     return { replace: false };
   }
 
