@@ -247,18 +247,21 @@ export class Namespace extends NamespaceBase {
 
     const removalPolicy = props.removalPolicy ?? RemovalPolicy.RETAIN;
 
-    let secret: DatabaseSecret | undefined;
-    if (!props.adminUserPassword) {
-      secret = new DatabaseSecret(this, 'Secret', {
-        username: props.adminUsername || 'admin',
-        encryptionKey: props.kmsKey,
-      });
-    }
+    this.secret = props.adminUserPassword
+      ? new secretsmanager.Secret(this, 'Secret', {
+        secretObjectValue: {
+          username: SecretValue.unsafePlainText(props.adminUsername || 'admin'),
+          password: SecretValue.unsafePlainText(props.adminUserPassword)
+        },
+    }) : new DatabaseSecret(this, 'Secret', {
+      username: props.adminUsername || 'admin',
+      encryptionKey: props.kmsKey,
+    })
 
     this.namespace = new redshift.CfnNamespace(this, 'Resource', {
       namespaceName: this.namespaceName,
-      adminUsername: secret?.secretValueFromJson('username').unsafeUnwrap() ?? props.adminUsername,
-      adminUserPassword: secret?.secretValueFromJson('password').unsafeUnwrap() ?? props.adminUserPassword,
+      adminUsername: this.secret?.secretValueFromJson('username').unsafeUnwrap(),
+      adminUserPassword: this.secret?.secretValueFromJson('password').unsafeUnwrap(),
       dbName: this.dbName,
       defaultIamRoleArn: this.defaultIamRole?.roleArn,
       finalSnapshotName: this.finalSnapshotName,
@@ -274,10 +277,6 @@ export class Namespace extends NamespaceBase {
     });
 
     this.namespaceName = this.namespace.ref;
-
-    if (secret) {
-      this.secret = secret;
-    }
   }
 
   /**
