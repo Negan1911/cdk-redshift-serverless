@@ -5,13 +5,12 @@ import { NamespaceProps } from './types';
 const redshiftData = new RedshiftData();
 
 export async function executeStatement(statement: string, namespaceProps: NamespaceProps): Promise<void> {
-  const executeStatementProps = {
-    namespaceProps: namespaceProps.namespaceName,
+  const executedStatement = await redshiftData.executeStatement({
+    WorkgroupName: namespaceProps.workGroupName,
     Database: namespaceProps.databaseName,
     SecretArn: namespaceProps.adminUserArn,
     Sql: statement,
-  };
-  const executedStatement = await redshiftData.executeStatement(executeStatementProps).promise();
+  }).promise();
   if (!executedStatement.Id) {
     throw new Error('Service error: Statement execution did not return a statement ID');
   }

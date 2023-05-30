@@ -18,5 +18,6 @@ export async function handler(event: AWSLambda.CloudFormationCustomResourceEvent
   if (!subHandler) {
     throw new Error(`Requested handler ${event.ResourceProperties.handler} is not in supported set: ${JSON.stringify(Object.keys(HANDLERS))}`);
   }
+  
   return subHandler(event.ResourceProperties, event);
 }

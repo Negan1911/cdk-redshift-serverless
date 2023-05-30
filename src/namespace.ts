@@ -231,6 +231,13 @@ export class Namespace extends NamespaceBase {
    */
   private readonly namespace: redshift.CfnNamespace;
 
+  static fromNamespaceAttributes(scope: Construct, id: string, nsName: string, dbName: string): INamespace {
+    return new class extends NamespaceBase {
+      public namespaceName: string = nsName;
+      public dbName: string = dbName;
+    }(scope, id);
+  }
+
 
   constructor(scope: Construct, id: string, props: NamespaceProps) {
     super(scope, id);
