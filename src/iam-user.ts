@@ -1,10 +1,8 @@
-import * as kms from 'aws-cdk-lib/aws-kms';
-import * as secretsmanager from 'aws-cdk-lib/aws-secretsmanager';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as cdk from 'aws-cdk-lib';
+import { INamespace } from './namespace';
 import { Construct, IConstruct } from 'constructs';
 import { DatabaseOptions } from './database-options';
-import { DatabaseSecret } from './database-secret';
 import { DatabaseQuery } from './private/database-query';
 import * as redshift from 'aws-cdk-lib/aws-redshiftserverless';
 import { HandlerName } from './private/database-query-provider/handler-name';
@@ -58,7 +56,7 @@ export interface IIAMUser extends IConstruct {
   /**
    * The Workgroup containing the database.
    */
-  readonly namespace: redshift.CfnNamespace;
+  readonly namespace: INamespace;
 
   /**
    * Grant this user privilege to access a table.
@@ -79,7 +77,7 @@ export interface IAMUserAttributes extends DatabaseOptions {
 abstract class UserBase extends Construct implements IIAMUser {
   abstract readonly username: string;
   abstract readonly workGroup: redshift.CfnWorkgroup;
-  abstract readonly namespace: redshift.CfnNamespace;
+  abstract readonly namespace: INamespace;
 
   /**
    * The tables that user will have access to
@@ -118,7 +116,7 @@ export class IAMUser extends UserBase {
 
   readonly username: string;
   readonly workGroup: redshift.CfnWorkgroup;
-  readonly namespace: redshift.CfnNamespace;
+  readonly namespace: INamespace;
   protected databaseProps: DatabaseOptions;
 
   private resource: DatabaseQuery<UserGenericProps>;

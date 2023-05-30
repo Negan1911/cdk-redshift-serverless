@@ -1,3 +1,4 @@
+import { INamespace } from './namespace';
 import * as redshift from 'aws-cdk-lib/aws-redshiftserverless';
 import * as secretsmanager from 'aws-cdk-lib/aws-secretsmanager';
 
@@ -13,7 +14,7 @@ export interface DatabaseOptions {
   /**
    * The Workgroup containing the database.
    */
-  readonly namespace: redshift.CfnNamespace;
+  readonly namespace: INamespace;
 
   /**
    * The secret containing credentials to a Redshift user with administrator privileges.

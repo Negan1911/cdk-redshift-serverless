@@ -1,7 +1,6 @@
 import * as path from 'path';
 import * as cdk from 'aws-cdk-lib';
 import * as iam from 'aws-cdk-lib/aws-iam';
-import * as kms from 'aws-cdk-lib/aws-kms';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as secretsmanager from 'aws-cdk-lib/aws-secretsmanager';
 import * as customresources from 'aws-cdk-lib/custom-resources';
@@ -55,9 +54,9 @@ export class DatabaseQuery<HandlerProps> extends Construct implements iam.IGrant
     const queryHandlerProps: DatabaseQueryHandlerProps & HandlerProps = {
       handler: props.handler,
       workGroupName: props.workGroup.attrWorkgroupWorkgroupName,
-      namespaceName: props.namespace.attrNamespaceNamespaceName,
+      namespaceName: props.namespace.namespaceName,
       adminUserArn: adminUser.secretArn,
-      databaseName: props.namespace.attrNamespaceDbName,
+      databaseName: props.namespace.dbName,
       ...props.properties,
     };
 

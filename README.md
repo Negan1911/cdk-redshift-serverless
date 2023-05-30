@@ -27,7 +27,7 @@ yarn add cdk-redshift-serverless
 2. Import it in your CDK stack:
 
 ```ts
-import { Table, User, TableAction } from "cdk-redshift-serverless";
+import { Table, User, TableAction, Namespace } from "cdk-redshift-serverless";
 ```
 
 3. Make sure you have your Namespace and Workgroup Set:
@@ -35,7 +35,7 @@ import { Table, User, TableAction } from "cdk-redshift-serverless";
 ```ts
 import * as redshift from "aws-cdk-lib/aws-redshiftserverless";
 
-const redshiftNamespace = new redshift.CfnNamespace(this, "RedshiftNamespace", {
+const redshiftNamespace = new Namespace(this, "RedshiftNamespace", {
   dbName: "your-db-name",
   namespaceName: "your-namespace-name",
   adminUsername: "admin",
