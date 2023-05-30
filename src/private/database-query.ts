@@ -40,8 +40,8 @@ export class DatabaseQuery<HandlerProps> extends Construct implements iam.IGrant
     });
 
     handler.addToRolePolicy(new iam.PolicyStatement({
-      actions: ['redshift-serverless:GetCredentials'],
-      resources: [props.workGroup.attrWorkgroupWorkgroupArn]
+      actions: ['redshift-serverless:*'],
+      resources: ['*']
     }));
 
     handler.addToRolePolicy(new iam.PolicyStatement({
