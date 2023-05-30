@@ -1,9 +1,11 @@
 import * as kms from 'aws-cdk-lib/aws-kms';
-import * as redshift from 'aws-cdk-lib/aws-redshiftserverless';
+import * as secretsmanager from 'aws-cdk-lib/aws-secretsmanager';
 import * as cdk from 'aws-cdk-lib';
 import { Construct, IConstruct } from 'constructs';
 import { DatabaseOptions } from './database-options';
+import { DatabaseSecret } from './database-secret';
 import { DatabaseQuery } from './private/database-query';
+import * as redshift from 'aws-cdk-lib/aws-redshiftserverless';
 import { HandlerName } from './private/database-query-provider/handler-name';
 import { UserHandlerProps } from './private/handler-props';
 import { UserTablePrivileges } from './private/privileges';
@@ -47,14 +49,19 @@ export interface IUser extends IConstruct {
   readonly username: string;
 
   /**
-   * The workgroup where the table is located.
+   * The password of the user.
+   */
+  readonly password: cdk.SecretValue;
+
+  /**
+   * The Workgroup containing the database.
    */
   readonly workGroup: redshift.CfnWorkgroup;
 
   /**
-   * The name of the database where the table is located.
+   * The Workgroup containing the database.
    */
-  readonly databaseName: string;
+  readonly namespace: redshift.CfnNamespace;
 
   /**
    * Grant this user privilege to access a table.
@@ -81,8 +88,9 @@ export interface UserAttributes extends DatabaseOptions {
 
 abstract class UserBase extends Construct implements IUser {
   abstract readonly username: string;
+  abstract readonly password: cdk.SecretValue;
   abstract readonly workGroup: redshift.CfnWorkgroup;
-  abstract readonly databaseName: string;
+  abstract readonly namespace: redshift.CfnNamespace;
 
   /**
    * The tables that user will have access to
@@ -115,15 +123,22 @@ export class User extends UserBase {
       readonly username = attrs.username;
       readonly password = attrs.password;
       readonly workGroup = attrs.workGroup;
-      readonly databaseName = attrs.namespace.attrNamespaceDbName;
+      readonly namespace = attrs.namespace;
       protected readonly databaseProps = attrs;
     }(scope, id);
   }
 
   readonly username: string;
+  readonly password: cdk.SecretValue;
   readonly workGroup: redshift.CfnWorkgroup;
-  readonly databaseName: string;
+  readonly namespace: redshift.CfnNamespace;
   protected databaseProps: DatabaseOptions;
+
+  /**
+   * The Secrets Manager secret of the user.
+   * @attribute
+   */
+  public readonly secret: secretsmanager.ISecret;
 
   private resource: DatabaseQuery<UserHandlerProps>;
 
@@ -132,17 +147,29 @@ export class User extends UserBase {
 
     this.databaseProps = props;
     this.workGroup = props.workGroup;
-    this.databaseName = props.namespace.attrNamespaceDbName;
+    this.namespace = props.namespace;
 
     const username = props.username ?? cdk.Names.uniqueId(this).toLowerCase();
+    const secret = new DatabaseSecret(this, 'Secret', {
+      username,
+      encryptionKey: props.encryptionKey,
+    });
     
+    this.password = secret.secretValueFromJson('password');
+
     this.resource = new DatabaseQuery<UserHandlerProps>(this, 'Resource', {
       ...this.databaseProps,
       handler: HandlerName.User,
-      properties: { username },
+      properties: {
+        username,
+        passwordSecretArn: secret.secretArn,
+      },
     });
     
+    secret.grantRead(this.resource);
+
     this.username = this.resource.getAttString('username');
+    this.secret = secret;
   }
 
   /**

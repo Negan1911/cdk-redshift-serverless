@@ -1,8 +1,8 @@
-import { WorkGroupProps } from './types';
+import { NamespaceProps } from './types';
 import { Column } from '../../table';
 
-export function makePhysicalId(resourceName: string, clusterProps: WorkGroupProps, requestId: string): string {
-  return `${clusterProps.workGroupName}:${clusterProps.databaseName}:${resourceName}:${requestId}`;
+export function makePhysicalId(resourceName: string, namespaceProps: NamespaceProps, requestId: string): string {
+  return `${namespaceProps.namespaceName}:${namespaceProps.databaseName}:${resourceName}:${requestId}`;
 }
 
 export function getDistKeyColumn(columns: Column[]): Column | undefined {

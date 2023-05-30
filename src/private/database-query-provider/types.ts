@@ -1,7 +1,7 @@
 import { DatabaseQueryHandlerProps, TableHandlerProps } from '../handler-props';
 
-export type WorkGroupProps = Omit<DatabaseQueryHandlerProps, 'handler'>;
-export type TableAndWorkGroupProps = TableHandlerProps & WorkGroupProps;
+export type NamespaceProps = Omit<DatabaseQueryHandlerProps, 'handler'>;
+export type TableAndNamespaceProps = TableHandlerProps & NamespaceProps;
 
 /**
  * The sort style of a table.

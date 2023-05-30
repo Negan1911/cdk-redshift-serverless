@@ -1,18 +1,17 @@
 /* eslint-disable-next-line import/no-extraneous-dependencies */
 import RedshiftData from 'aws-sdk/clients/redshiftdata';
-import { WorkGroupProps } from './types';
+import { NamespaceProps } from './types';
 
 const redshiftData = new RedshiftData();
 
-export async function executeStatement(statement: string, workGroupProps: WorkGroupProps): Promise<void> {
-  const executedStatement = await redshiftData.executeStatement({
-    WorkgroupName: workGroupProps.workGroupName,
-    Database: workGroupProps.databaseName,
+export async function executeStatement(statement: string, namespaceProps: NamespaceProps): Promise<void> {
+  const executeStatementProps = {
+    namespaceProps: namespaceProps.namespaceName,
+    Database: namespaceProps.databaseName,
+    SecretArn: namespaceProps.adminUserArn,
     Sql: statement,
-  }).promise();
-
-  console.log('Executing Statement: ', statement);
-  
+  };
+  const executedStatement = await redshiftData.executeStatement(executeStatementProps).promise();
   if (!executedStatement.Id) {
     throw new Error('Service error: Statement execution did not return a statement ID');
   }

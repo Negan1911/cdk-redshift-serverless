@@ -3,12 +3,14 @@ import { Column, TableDistStyle, TableSortStyle } from '../table';
 export interface DatabaseQueryHandlerProps {
   readonly handler: string;
   readonly workGroupName: string;
+  readonly namespaceName: string;
+  readonly adminUserArn: string;
   readonly databaseName: string;
-  readonly username: string;
 }
 
 export interface UserHandlerProps {
   readonly username: string;
+  readonly passwordSecretArn: string;
 }
 
 export interface TableHandlerProps {

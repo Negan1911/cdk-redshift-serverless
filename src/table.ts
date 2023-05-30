@@ -1,14 +1,14 @@
 /* eslint-disable import/no-extraneous-dependencies */
 import * as cdk from 'aws-cdk-lib';
-import * as iam from 'aws-cdk-lib/aws-iam';
+import { REDSHIFT_COLUMN_ID } from 'aws-cdk-lib/cx-api';
+import * as redshift from 'aws-cdk-lib/aws-redshiftserverless';
 import { Construct, IConstruct } from 'constructs';
 import { DatabaseOptions } from './database-options';
-import { REDSHIFT_COLUMN_ID } from 'aws-cdk-lib/cx-api';
 import { DatabaseQuery } from './private/database-query';
-import { UserTablePrivileges } from './private/privileges';
-import { TableHandlerProps } from './private/handler-props';
 import { HandlerName } from './private/database-query-provider/handler-name';
 import { getDistKeyColumn, getSortKeyColumns } from './private/database-query-provider/util';
+import { TableHandlerProps } from './private/handler-props';
+import { IUser } from './user';
 
 /**
  * An action that a Redshift user can be granted privilege to perform on a table.
@@ -166,14 +166,19 @@ export interface ITable extends IConstruct {
   readonly tableColumns: Column[];
 
   /**
-   * The workgroup name where the table is located.
+   * The namespace where the table is located.
    */
-  readonly workGroupName: string;
+  readonly namespace: redshift.CfnNamespace;
 
   /**
-   * The name of the database where the table is located.
+   * The workgroup where the table is located.
    */
-  readonly databaseName: string;
+  readonly workgroup: redshift.CfnWorkgroup;
+
+  /**
+   * Grant a user privilege to access this table.
+   */
+  grant(user: IUser, ...actions: TableAction[]): void;
 }
 
 /**
@@ -191,21 +196,24 @@ export interface TableAttributes {
   readonly tableColumns: Column[];
 
   /**
-   * The cluster where the table is located.
+   * The namespace where the table is located.
    */
-  readonly workGroupName: string;
+  readonly namespace: redshift.CfnNamespace;
 
   /**
-   * The name of the database where the table is located.
+   * The workgroup where the table is located.
    */
-  readonly databaseName: string;
+  readonly workgroup: redshift.CfnWorkgroup;
 }
 
 abstract class TableBase extends Construct implements ITable {
   abstract readonly tableName: string;
   abstract readonly tableColumns: Column[];
-  abstract readonly workGroupName: string;
-  abstract readonly databaseName: string;
+  abstract readonly namespace: redshift.CfnNamespace;
+  abstract readonly workgroup: redshift.CfnWorkgroup;
+  grant(user: IUser, ...actions: TableAction[]) {
+    user.addTablePrivileges(this, ...actions);
+  }
 }
 
 /**
@@ -213,27 +221,21 @@ abstract class TableBase extends Construct implements ITable {
  */
 export class Table extends TableBase {
   /**
-   * The tables that user will have access to
-   */
-  private privileges?: Record<string, UserTablePrivileges> = {};
-
-  /**
    * Specify a Redshift table using a table name and schema that already exists.
    */
   static fromTableAttributes(scope: Construct, id: string, attrs: TableAttributes): ITable {
     return new class extends TableBase {
       readonly tableName = attrs.tableName;
       readonly tableColumns = attrs.tableColumns;
-      readonly workGroupName = attrs.workGroupName;
-      readonly databaseName = attrs.databaseName;
+      readonly namespace = attrs.namespace;
+      readonly workgroup = attrs.workgroup;
     }(scope, id);
   }
 
   readonly tableName: string;
   readonly tableColumns: Column[];
-  readonly workGroupName: string;
-  readonly databaseName: string;
-  private workGroup: TableProps['workGroup'];
+  readonly namespace: redshift.CfnNamespace;
+  readonly workgroup: redshift.CfnWorkgroup;
 
   private resource: DatabaseQuery<TableHandlerProps>;
 
@@ -248,10 +250,9 @@ export class Table extends TableBase {
       this.validateSortStyle(props.sortStyle, props.tableColumns);
     }
 
-    this.workGroup = props.workGroup;
     this.tableColumns = this.configureTableColumns(props.tableColumns);
-    this.workGroupName = props.workGroup.workgroupName;
-    this.databaseName = props.namespace.attrNamespaceDbName;
+    this.namespace = props.namespace;
+    this.workgroup = props.workGroup;
 
     const useColumnIds = !!cdk.FeatureFlags.of(this).isEnabled(REDSHIFT_COLUMN_ID);
 

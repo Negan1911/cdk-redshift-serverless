@@ -1,7 +1,9 @@
 import * as path from 'path';
 import * as cdk from 'aws-cdk-lib';
 import * as iam from 'aws-cdk-lib/aws-iam';
+import * as kms from 'aws-cdk-lib/aws-kms';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
+import * as secretsmanager from 'aws-cdk-lib/aws-secretsmanager';
 import * as customresources from 'aws-cdk-lib/custom-resources';
 import { Construct } from 'constructs';
 import { DatabaseQueryHandlerProps } from './handler-props';
@@ -28,6 +30,8 @@ export class DatabaseQuery<HandlerProps> extends Construct implements iam.IGrant
   constructor(scope: Construct, id: string, props: DatabaseQueryProps<HandlerProps>) {
     super(scope, id);
 
+    const adminUser = this.getAdminUser(props);
+
     const handler = new lambda.SingletonFunction(this, 'Handler', {
       code: lambda.Code.fromAsset(path.join(__dirname, 'database-query-provider'), {
         exclude: ['*.ts'],
@@ -38,16 +42,11 @@ export class DatabaseQuery<HandlerProps> extends Construct implements iam.IGrant
       uuid: '3de5bea7-27da-4796-8662-5efb56431b5f',
       lambdaPurpose: 'Query Redshift Database',
     });
-
-    handler.addToRolePolicy(new iam.PolicyStatement({
-      actions: ['redshift-serverless:*'],
-      resources: ['*']
-    }));
-
     handler.addToRolePolicy(new iam.PolicyStatement({
       actions: ['redshift-data:DescribeStatement', 'redshift-data:ExecuteStatement'],
       resources: ['*'],
     }));
+    adminUser.grantRead(handler);
 
     const provider = new customresources.Provider(this, 'Provider', {
       onEventHandler: handler,
@@ -55,11 +54,13 @@ export class DatabaseQuery<HandlerProps> extends Construct implements iam.IGrant
 
     const queryHandlerProps: DatabaseQueryHandlerProps & HandlerProps = {
       handler: props.handler,
-      username: props.namespace.attrNamespaceAdminUsername,
-      workGroupName: props.workGroup.workgroupName,
+      workGroupName: props.workGroup.attrWorkgroupWorkgroupName,
+      namespaceName: props.namespace.attrNamespaceNamespaceName,
+      adminUserArn: adminUser.secretArn,
       databaseName: props.namespace.attrNamespaceDbName,
       ...props.properties,
     };
+
     this.resource = new cdk.CustomResource(this, 'Resource', {
       resourceType: 'Custom::RedshiftDatabaseQuery',
       serviceToken: provider.serviceToken,
@@ -83,7 +84,15 @@ export class DatabaseQuery<HandlerProps> extends Construct implements iam.IGrant
     return this.resource.getAttString(attributeName);
   }
 
-  private getAdminUser(props: DatabaseOptions): string {
-    return props.namespace.attrNamespaceAdminUsername;
+  private getAdminUser(props: DatabaseOptions): secretsmanager.ISecret {
+    let adminUser = props.adminUser;
+
+    if (!adminUser) {
+      throw new Error(
+        'Administrative access to the Redshift cluster is required but an admin user secret was not provided and the cluster was imported',
+      );
+    }
+
+    return adminUser;
   }
 }

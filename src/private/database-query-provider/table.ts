@@ -1,22 +1,22 @@
 /* eslint-disable-next-line import/no-unresolved */
 import * as AWSLambda from 'aws-lambda';
 import { executeStatement } from './redshift-data';
-import { WorkGroupProps, TableAndWorkGroupProps, TableSortStyle } from './types';
+import { NamespaceProps, TableAndNamespaceProps, TableSortStyle } from './types';
 import { areColumnsEqual, getDistKeyColumn, getSortKeyColumns } from './util';
 import { Column } from '../../table';
 
-export async function handler(props: TableAndWorkGroupProps, event: AWSLambda.CloudFormationCustomResourceEvent) {
+export async function handler(props: TableAndNamespaceProps, event: AWSLambda.CloudFormationCustomResourceEvent) {
   const tableNamePrefix = props.tableName.prefix;
   const tableNameSuffix = props.tableName.generateSuffix === 'true' ? `${event.RequestId.substring(0, 8)}` : '';
   const tableColumns = props.tableColumns;
-  const tableAndWorkGroupProps = props;
+  const tableAndNamespaceProps = props;
   const useColumnIds = props.useColumnIds;
 
   if (event.RequestType === 'Create') {
-    const tableName = await createTable(tableNamePrefix, tableNameSuffix, tableColumns, tableAndWorkGroupProps);
+    const tableName = await createTable(tableNamePrefix, tableNameSuffix, tableColumns, tableAndNamespaceProps);
     return { PhysicalResourceId: tableName };
   } else if (event.RequestType === 'Delete') {
-    await dropTable(event.PhysicalResourceId, tableAndWorkGroupProps);
+    await dropTable(event.PhysicalResourceId, tableAndNamespaceProps);
     return;
   } else if (event.RequestType === 'Update') {
     const tableName = await updateTable(
@@ -25,8 +25,8 @@ export async function handler(props: TableAndWorkGroupProps, event: AWSLambda.Cl
       tableNameSuffix,
       tableColumns,
       useColumnIds,
-      tableAndWorkGroupProps,
-      event.OldResourceProperties as TableAndWorkGroupProps,
+      tableAndNamespaceProps,
+      event.OldResourceProperties as TableAndNamespaceProps,
     );
     return { PhysicalResourceId: tableName };
   } else {
@@ -39,15 +39,15 @@ async function createTable(
   tableNamePrefix: string,
   tableNameSuffix: string,
   tableColumns: Column[],
-  tableAndWorkGroupProps: TableAndWorkGroupProps,
+  tableAndNamespaceProps: TableAndNamespaceProps,
 ): Promise<string> {
   const tableName = tableNamePrefix + tableNameSuffix;
   const tableColumnsString = tableColumns.map(column => `${column.name} ${column.dataType}${getEncodingColumnString(column)}`).join();
 
-  let statement = `CREATE TABLE "${tableName}" (${tableColumnsString})`;
+  let statement = `CREATE TABLE ${tableName} (${tableColumnsString})`;
 
-  if (tableAndWorkGroupProps.distStyle) {
-    statement += ` DISTSTYLE ${tableAndWorkGroupProps.distStyle}`;
+  if (tableAndNamespaceProps.distStyle) {
+    statement += ` DISTSTYLE ${tableAndNamespaceProps.distStyle}`;
   }
 
   const distKeyColumn = getDistKeyColumn(tableColumns);
@@ -58,25 +58,25 @@ async function createTable(
   const sortKeyColumns = getSortKeyColumns(tableColumns);
   if (sortKeyColumns.length > 0) {
     const sortKeyColumnsString = getSortKeyColumnsString(sortKeyColumns);
-    statement += ` ${tableAndWorkGroupProps.sortStyle} SORTKEY(${sortKeyColumnsString})`;
+    statement += ` ${tableAndNamespaceProps.sortStyle} SORTKEY(${sortKeyColumnsString})`;
   }
 
-  await executeStatement(statement, tableAndWorkGroupProps);
+  await executeStatement(statement, tableAndNamespaceProps);
 
   for (const column of tableColumns) {
     if (column.comment) {
-      await executeStatement(`COMMENT ON COLUMN "${tableName}.${column.name}" IS '${column.comment}'`, tableAndWorkGroupProps);
+      await executeStatement(`COMMENT ON COLUMN ${tableName}.${column.name} IS '${column.comment}'`, tableAndNamespaceProps);
     }
   }
-  if (tableAndWorkGroupProps.tableComment) {
-    await executeStatement(`COMMENT ON TABLE "${tableName}" IS '${tableAndWorkGroupProps.tableComment}'`, tableAndWorkGroupProps);
+  if (tableAndNamespaceProps.tableComment) {
+    await executeStatement(`COMMENT ON TABLE ${tableName} IS '${tableAndNamespaceProps.tableComment}'`, tableAndNamespaceProps);
   }
 
   return tableName;
 }
 
-async function dropTable(tableName: string, WorkGroupProps: WorkGroupProps) {
-  await executeStatement(`DROP TABLE "${tableName}"`, WorkGroupProps);
+async function dropTable(tableName: string, namespaceProps: NamespaceProps) {
+  await executeStatement(`DROP TABLE ${tableName}`, namespaceProps);
 }
 
 async function updateTable(
@@ -85,19 +85,19 @@ async function updateTable(
   tableNameSuffix: string,
   tableColumns: Column[],
   useColumnIds: boolean,
-  tableAndWorkGroupProps: TableAndWorkGroupProps,
-  oldResourceProperties: TableAndWorkGroupProps,
+  tableAndNamespaceProps: TableAndNamespaceProps,
+  oldResourceProperties: TableAndNamespaceProps,
 ): Promise<string> {
   const alterationStatements: string[] = [];
 
-  const oldWorkGroupProps = oldResourceProperties;
-  if (tableAndWorkGroupProps.workGroupName !== oldWorkGroupProps.workGroupName || tableAndWorkGroupProps.databaseName !== oldWorkGroupProps.databaseName) {
-    return createTable(tableNamePrefix, tableNameSuffix, tableColumns, tableAndWorkGroupProps);
+  const oldNamespaceProps = oldResourceProperties;
+  if (tableAndNamespaceProps.namespaceName !== oldNamespaceProps.namespaceName || tableAndNamespaceProps.databaseName !== oldNamespaceProps.databaseName) {
+    return createTable(tableNamePrefix, tableNameSuffix, tableColumns, tableAndNamespaceProps);
   }
 
   const oldTableNamePrefix = oldResourceProperties.tableName.prefix;
   if (tableNamePrefix !== oldTableNamePrefix) {
-    return createTable(tableNamePrefix, tableNameSuffix, tableColumns, tableAndWorkGroupProps);
+    return createTable(tableNamePrefix, tableNameSuffix, tableColumns, tableAndNamespaceProps);
   }
 
   const oldTableColumns = oldResourceProperties.tableColumns;
@@ -155,17 +155,17 @@ async function updateTable(
   }
 
   const oldDistStyle = oldResourceProperties.distStyle;
-  if ((!oldDistStyle && tableAndWorkGroupProps.distStyle) ||
-    (oldDistStyle && !tableAndWorkGroupProps.distStyle)) {
-    return createTable(tableNamePrefix, tableNameSuffix, tableColumns, tableAndWorkGroupProps);
-  } else if (oldDistStyle !== tableAndWorkGroupProps.distStyle) {
-    alterationStatements.push(`ALTER TABLE ${tableName} ALTER DISTSTYLE ${tableAndWorkGroupProps.distStyle}`);
+  if ((!oldDistStyle && tableAndNamespaceProps.distStyle) ||
+    (oldDistStyle && !tableAndNamespaceProps.distStyle)) {
+    return createTable(tableNamePrefix, tableNameSuffix, tableColumns, tableAndNamespaceProps);
+  } else if (oldDistStyle !== tableAndNamespaceProps.distStyle) {
+    alterationStatements.push(`ALTER TABLE ${tableName} ALTER DISTSTYLE ${tableAndNamespaceProps.distStyle}`);
   }
 
   const oldDistKey = getDistKeyColumn(oldTableColumns)?.name;
   const newDistKey = getDistKeyColumn(tableColumns)?.name;
   if ((!oldDistKey && newDistKey ) || (oldDistKey && !newDistKey)) {
-    return createTable(tableNamePrefix, tableNameSuffix, tableColumns, tableAndWorkGroupProps);
+    return createTable(tableNamePrefix, tableNameSuffix, tableColumns, tableAndNamespaceProps);
   } else if (oldDistKey !== newDistKey) {
     alterationStatements.push(`ALTER TABLE ${tableName} ALTER DISTKEY ${newDistKey}`);
   }
@@ -173,14 +173,14 @@ async function updateTable(
   const oldSortKeyColumns = getSortKeyColumns(oldTableColumns);
   const newSortKeyColumns = getSortKeyColumns(tableColumns);
   const oldSortStyle = oldResourceProperties.sortStyle;
-  const newSortStyle = tableAndWorkGroupProps.sortStyle;
+  const newSortStyle = tableAndNamespaceProps.sortStyle;
   if ((oldSortStyle === newSortStyle && !areColumnsEqual(oldSortKeyColumns, newSortKeyColumns))
     || (oldSortStyle !== newSortStyle)) {
     switch (newSortStyle) {
       case TableSortStyle.INTERLEAVED:
         // INTERLEAVED sort key addition requires replacement.
         // https://docs.aws.amazon.com/redshift/latest/dg/r_ALTER_TABLE.html
-        return createTable(tableNamePrefix, tableNameSuffix, tableColumns, tableAndWorkGroupProps);
+        return createTable(tableNamePrefix, tableNameSuffix, tableColumns, tableAndNamespaceProps);
 
       case TableSortStyle.COMPOUND: {
         const sortKeyColumnsString = getSortKeyColumnsString(newSortKeyColumns);
@@ -196,12 +196,12 @@ async function updateTable(
   }
 
   const oldComment = oldResourceProperties.tableComment;
-  const newComment = tableAndWorkGroupProps.tableComment;
+  const newComment = tableAndNamespaceProps.tableComment;
   if (oldComment !== newComment) {
-    alterationStatements.push(`COMMENT ON TABLE "${tableName}" IS ${newComment ? `'${newComment}'` : 'NULL'}`);
+    alterationStatements.push(`COMMENT ON TABLE ${tableName} IS ${newComment ? `'${newComment}'` : 'NULL'}`);
   }
 
-  await Promise.all(alterationStatements.map(statement => executeStatement(statement, tableAndWorkGroupProps)));
+  await Promise.all(alterationStatements.map(statement => executeStatement(statement, tableAndNamespaceProps)));
 
   return tableName;
 }

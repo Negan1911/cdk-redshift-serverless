@@ -1,28 +1,29 @@
+/* eslint-disable-next-line import/no-unresolved */
 import * as AWSLambda from 'aws-lambda';
 import { executeStatement } from './redshift-data';
-import { WorkGroupProps } from './types';
+import { NamespaceProps } from './types';
 import { makePhysicalId } from './util';
 import { TablePrivilege, UserTablePrivilegesHandlerProps } from '../handler-props';
 
-export async function handler(props: UserTablePrivilegesHandlerProps & WorkGroupProps, event: AWSLambda.CloudFormationCustomResourceEvent) {
+export async function handler(props: UserTablePrivilegesHandlerProps & NamespaceProps, event: AWSLambda.CloudFormationCustomResourceEvent) {
   const username = props.username;
   const tablePrivileges = props.tablePrivileges;
-  const workGroupProps = props;
+  const namespaceProps = props;
 
   if (event.RequestType === 'Create') {
-    await grantPrivileges(username, tablePrivileges, workGroupProps);
-    return { PhysicalResourceId: makePhysicalId(username, workGroupProps, event.RequestId) };
+    await grantPrivileges(username, tablePrivileges, namespaceProps);
+    return { PhysicalResourceId: makePhysicalId(username, namespaceProps, event.RequestId) };
   } else if (event.RequestType === 'Delete') {
-    await revokePrivileges(username, tablePrivileges, workGroupProps);
+    await revokePrivileges(username, tablePrivileges, namespaceProps);
     return;
   } else if (event.RequestType === 'Update') {
     const { replace } = await updatePrivileges(
       username,
       tablePrivileges,
-      workGroupProps,
-      event.OldResourceProperties as UserTablePrivilegesHandlerProps & WorkGroupProps,
+      namespaceProps,
+      event.OldResourceProperties as UserTablePrivilegesHandlerProps & NamespaceProps,
     );
-    const physicalId = replace ? makePhysicalId(username, workGroupProps, event.RequestId) : event.PhysicalResourceId;
+    const physicalId = replace ? makePhysicalId(username, namespaceProps, event.RequestId) : event.PhysicalResourceId;
     return { PhysicalResourceId: physicalId };
   } else {
     /* eslint-disable-next-line dot-notation */
@@ -30,40 +31,40 @@ export async function handler(props: UserTablePrivilegesHandlerProps & WorkGroup
   }
 }
 
-async function revokePrivileges(username: string, tablePrivileges: TablePrivilege[], workGroupProps: WorkGroupProps) {
+async function revokePrivileges(username: string, tablePrivileges: TablePrivilege[], namespaceProps: NamespaceProps) {
   await Promise.all(tablePrivileges.map(({ tableName, actions }) => {
-    return executeStatement(`REVOKE ${actions.join(', ')} ON ${tableName} FROM ${username}`, workGroupProps);
+    return executeStatement(`REVOKE ${actions.join(', ')} ON ${tableName} FROM ${username}`, namespaceProps);
   }));
 }
 
-async function grantPrivileges(username: string, tablePrivileges: TablePrivilege[], workGroupProps: WorkGroupProps) {
+async function grantPrivileges(username: string, tablePrivileges: TablePrivilege[], namespaceProps: NamespaceProps) {
   await Promise.all(tablePrivileges.map(({ tableName, actions }) => {
-    return executeStatement(`GRANT ${actions.join(', ')} ON ${tableName} TO ${username}`, workGroupProps);
+    return executeStatement(`GRANT ${actions.join(', ')} ON ${tableName} TO ${username}`, namespaceProps);
   }));
 }
 
 async function updatePrivileges(
   username: string,
   tablePrivileges: TablePrivilege[],
-  workGroupProps: WorkGroupProps,
-  oldResourceProperties: UserTablePrivilegesHandlerProps & WorkGroupProps,
+  namespaceProps: NamespaceProps,
+  oldResourceProperties: UserTablePrivilegesHandlerProps & NamespaceProps,
 ): Promise<{ replace: boolean }> {
-  const oldWorkGroupProps = oldResourceProperties;
-  if (workGroupProps.workGroupName !== oldWorkGroupProps.workGroupName || workGroupProps.databaseName !== oldWorkGroupProps.databaseName) {
-    await grantPrivileges(username, tablePrivileges, workGroupProps);
+  const oldNamespaceProps = oldResourceProperties;
+  if (namespaceProps.workGroupName !== oldNamespaceProps.workGroupName || namespaceProps.databaseName !== oldNamespaceProps.databaseName) {
+    await grantPrivileges(username, tablePrivileges, namespaceProps);
     return { replace: true };
   }
 
   const oldUsername = oldResourceProperties.username;
   if (oldUsername !== username) {
-    await grantPrivileges(username, tablePrivileges, workGroupProps);
+    await grantPrivileges(username, tablePrivileges, namespaceProps);
     return { replace: true };
   }
 
   const oldTablePrivileges = oldResourceProperties.tablePrivileges;
   if (oldTablePrivileges !== tablePrivileges) {
-    await revokePrivileges(username, oldTablePrivileges, workGroupProps);
-    await grantPrivileges(username, tablePrivileges, workGroupProps);
+    await revokePrivileges(username, oldTablePrivileges, namespaceProps);
+    await grantPrivileges(username, tablePrivileges, namespaceProps);
     return { replace: false };
   }
 

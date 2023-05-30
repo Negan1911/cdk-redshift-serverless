@@ -1,4 +1,6 @@
 export * from './database-options';
-export * from './endpoint';
+export * from './database-secret';
 export * from './table';
 export * from './user';
+
+// AWS::Redshift CloudFormation Resources:
