@@ -6,6 +6,7 @@ import { TablePrivilege as SerializedTablePrivilege, UserTablePrivilegesHandlerP
 import { DatabaseOptions } from '../database-options';
 import { ITable, TableAction } from '../table';
 import { IUser } from '../user';
+import { IIAMUser } from '../iam-user';
 
 /**
  * The Redshift table and action that make up a privilege that can be granted to a Redshift user.
@@ -29,7 +30,7 @@ export interface UserTablePrivilegesProps extends DatabaseOptions {
   /**
    * The user to which privileges will be granted.
    */
-  readonly user: IUser;
+  readonly user: IUser | IIAMUser;
 
   /**
    * The privileges to be granted.

@@ -8,8 +8,11 @@ export interface DatabaseQueryHandlerProps {
   readonly databaseName: string;
 }
 
-export interface UserHandlerProps {
+export interface UserGenericProps {
   readonly username: string;
+}
+
+export interface UserHandlerProps extends UserGenericProps {
   readonly passwordSecretArn: string;
 }
 

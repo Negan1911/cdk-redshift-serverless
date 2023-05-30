@@ -4,10 +4,12 @@ import { HandlerName } from './handler-name';
 import { handler as managePrivileges } from './privileges';
 import { handler as manageTable } from './table';
 import { handler as manageUser } from './user';
+import { handler as manageIamUser } from './iam-user';
 
 const HANDLERS: { [key in HandlerName]: ((props: any, event: AWSLambda.CloudFormationCustomResourceEvent) => Promise<any>) } = {
   [HandlerName.Table]: manageTable,
   [HandlerName.User]: manageUser,
+  [HandlerName.IAMUser]: manageIamUser,
   [HandlerName.UserTablePrivileges]: managePrivileges,
 };
 
