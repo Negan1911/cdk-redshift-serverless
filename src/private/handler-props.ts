@@ -11,11 +11,6 @@ export interface UserHandlerProps {
   readonly username: string;
 }
 
-export interface PermissionProps {
-  readonly username: string;
-  readonly passwordSecretArn: string;
-}
-
 export interface TableHandlerProps {
   readonly tableName: {
     readonly prefix: string;

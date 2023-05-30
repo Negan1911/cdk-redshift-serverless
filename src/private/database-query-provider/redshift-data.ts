@@ -7,7 +7,6 @@ const redshiftData = new RedshiftData();
 export async function executeStatement(statement: string, workGroupProps: WorkGroupProps): Promise<void> {
   const executedStatement = await redshiftData.executeStatement({
     WorkgroupName: workGroupProps.workGroupName,
-    DbUser: workGroupProps.username,
     Database: workGroupProps.databaseName,
     Sql: statement,
   }).promise();
