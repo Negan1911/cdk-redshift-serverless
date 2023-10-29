@@ -9,6 +9,7 @@ import { HandlerName } from './private/database-query-provider/handler-name';
 import { UserGenericProps } from './private/handler-props';
 import { UserTablePrivileges } from './private/privileges';
 import { ITable, TableAction } from './table';
+import { Workgroup } from './workgroup';
 
 /**
  * Properties for configuring a Redshift user.
@@ -51,7 +52,7 @@ export interface IIAMUser extends IConstruct {
   /**
    * The Workgroup containing the database.
    */
-  readonly workGroup: redshift.CfnWorkgroup;
+  readonly workGroup: Workgroup;
 
   /**
    * The Workgroup containing the database.
@@ -76,7 +77,7 @@ export interface IAMUserAttributes extends DatabaseOptions {
 
 abstract class UserBase extends Construct implements IIAMUser {
   abstract readonly username: string;
-  abstract readonly workGroup: redshift.CfnWorkgroup;
+  abstract readonly workGroup: Workgroup;
   abstract readonly namespace: INamespace;
 
   /**
@@ -115,7 +116,7 @@ export class IAMUser extends UserBase {
   }
 
   readonly username: string;
-  readonly workGroup: redshift.CfnWorkgroup;
+  readonly workGroup: Workgroup;
   readonly namespace: INamespace;
   protected databaseProps: DatabaseOptions;
 

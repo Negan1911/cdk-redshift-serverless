@@ -10,6 +10,7 @@ import { getDistKeyColumn, getSortKeyColumns } from './private/database-query-pr
 import { TableHandlerProps } from './private/handler-props';
 import { IUser } from './user';
 import { INamespace } from './namespace';
+import { Workgroup } from './workgroup';
 
 /**
  * An action that a Redshift user can be granted privilege to perform on a table.
@@ -174,7 +175,7 @@ export interface ITable extends IConstruct {
   /**
    * The workgroup where the table is located.
    */
-  readonly workgroup: redshift.CfnWorkgroup;
+  readonly workgroup: Workgroup;
 
   /**
    * Grant a user privilege to access this table.
@@ -204,14 +205,14 @@ export interface TableAttributes {
   /**
    * The workgroup where the table is located.
    */
-  readonly workgroup: redshift.CfnWorkgroup;
+  readonly workgroup: Workgroup;
 }
 
 abstract class TableBase extends Construct implements ITable {
   abstract readonly tableName: string;
   abstract readonly tableColumns: Column[];
   abstract readonly namespace: INamespace;
-  abstract readonly workgroup: redshift.CfnWorkgroup;
+  abstract readonly workgroup: Workgroup;
   grant(user: IUser, ...actions: TableAction[]) {
     user.addTablePrivileges(this, ...actions);
   }
@@ -236,7 +237,7 @@ export class Table extends TableBase {
   readonly tableName: string;
   readonly tableColumns: Column[];
   readonly namespace: INamespace;
-  readonly workgroup: redshift.CfnWorkgroup;
+  readonly workgroup: Workgroup;
 
   private resource: DatabaseQuery<TableHandlerProps>;
 

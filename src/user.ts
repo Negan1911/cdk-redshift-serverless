@@ -11,6 +11,7 @@ import { UserHandlerProps } from './private/handler-props';
 import { UserTablePrivileges } from './private/privileges';
 import { ITable, TableAction } from './table';
 import { INamespace } from './namespace';
+import { Workgroup } from './workgroup';
 
 /**
  * Properties for configuring a Redshift user.
@@ -57,7 +58,7 @@ export interface IUser extends IConstruct {
   /**
    * The Workgroup containing the database.
    */
-  readonly workGroup: redshift.CfnWorkgroup;
+  readonly workGroup: Workgroup;
 
   /**
    * The Workgroup containing the database.
@@ -90,7 +91,7 @@ export interface UserAttributes extends DatabaseOptions {
 abstract class UserBase extends Construct implements IUser {
   abstract readonly username: string;
   abstract readonly password: cdk.SecretValue;
-  abstract readonly workGroup: redshift.CfnWorkgroup;
+  abstract readonly workGroup: Workgroup;
   abstract readonly namespace: INamespace;
 
   /**
@@ -131,7 +132,7 @@ export class User extends UserBase {
 
   readonly username: string;
   readonly password: cdk.SecretValue;
-  readonly workGroup: redshift.CfnWorkgroup;
+  readonly workGroup: Workgroup;
   readonly namespace: INamespace;
   protected databaseProps: DatabaseOptions;
 

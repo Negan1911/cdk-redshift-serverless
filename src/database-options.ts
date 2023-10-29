@@ -1,3 +1,4 @@
+import { Workgroup } from './workgroup'
 import { INamespace } from './namespace';
 import * as redshift from 'aws-cdk-lib/aws-redshiftserverless';
 import * as secretsmanager from 'aws-cdk-lib/aws-secretsmanager';
@@ -9,7 +10,7 @@ export interface DatabaseOptions {
   /**
    * The Workgroup containing the database.
    */
-  readonly workGroup: redshift.CfnWorkgroup;
+  readonly workGroup: Workgroup;
 
   /**
    * The Workgroup containing the database.
