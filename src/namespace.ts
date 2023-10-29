@@ -229,7 +229,7 @@ export class Namespace extends NamespaceBase {
   /**
    * The underlying Namespace
    */
-  private readonly namespace: redshift.CfnNamespace;
+  readonly cfnNamespace: redshift.CfnNamespace;
 
   static fromNamespaceAttributes(scope: Construct, id: string, nsName: string, dbName: string): INamespace {
     return new class extends NamespaceBase {
@@ -265,7 +265,7 @@ export class Namespace extends NamespaceBase {
       encryptionKey: props.kmsKey,
     })
 
-    this.namespace = new redshift.CfnNamespace(this, 'Resource', {
+    this.cfnNamespace = new redshift.CfnNamespace(this, 'Resource', {
       namespaceName: this.namespaceName,
       adminUsername: this.adminUser?.secretValueFromJson('username').unsafeUnwrap(),
       adminUserPassword: this.adminUser?.secretValueFromJson('password').unsafeUnwrap(),
@@ -279,11 +279,11 @@ export class Namespace extends NamespaceBase {
       tags: this.tags,
     });
 
-    this.namespace.applyRemovalPolicy(removalPolicy, {
+    this.cfnNamespace.applyRemovalPolicy(removalPolicy, {
       applyToUpdateReplacePolicy: true,
     });
 
-    this.namespaceName = this.namespace.ref;
+    this.namespaceName = this.cfnNamespace.ref;
   }
 
   /**

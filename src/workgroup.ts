@@ -1,5 +1,6 @@
 import cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
+import { Namespace } from './namespace';
 import { CfnWorkgroup } from "aws-cdk-lib/aws-redshiftserverless";
 
 /**
@@ -40,7 +41,7 @@ export interface WorkgroupProps {
    *
    * @link http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-redshiftserverless-workgroup.html#cfn-redshiftserverless-workgroup-namespacename
    */
-  readonly namespaceName?: string;
+  readonly namespace?: Namespace;
   /**
    * The custom port to use when connecting to a workgroup. Valid port ranges are 5431-5455 and 8191-8215. The default is 5439.
    *
@@ -75,6 +76,12 @@ export interface WorkgroupProps {
 
 export class Workgroup extends CfnWorkgroup {
   constructor(scope: Construct, id: string, props: WorkgroupProps) {
-    super(scope, id, props)
+    super(scope, id, {
+      ...props,
+      namespaceName: props.namespace?.namespaceName
+    })
+
+    if (props.namespace)
+      this.addDependency(props.namespace.cfnNamespace)
   }
 }
