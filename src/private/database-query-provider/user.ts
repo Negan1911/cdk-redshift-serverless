@@ -1,13 +1,13 @@
 /* eslint-disable-next-line import/no-unresolved */
 import * as AWSLambda from 'aws-lambda';
 /* eslint-disable-next-line import/no-extraneous-dependencies */
-import SecretsManager from 'aws-sdk/clients/secretsmanager';
 import { executeStatement } from './redshift-data';
 import { NamespaceProps } from './types';
 import { makePhysicalId } from './util';
 import { UserHandlerProps } from '../handler-props';
+import { GetSecretValueCommand, SecretsManagerClient } from '@aws-sdk/client-secrets-manager';
 
-const secretsManager = new SecretsManager();
+const secretsManager = new SecretsManagerClient();
 
 export async function handler(props: UserHandlerProps & NamespaceProps, event: AWSLambda.CloudFormationCustomResourceEvent) {
   const username = props.username;
@@ -71,9 +71,12 @@ async function updateUser(
 }
 
 async function getPasswordFromSecret(passwordSecretArn: string): Promise<string> {
-  const secretValue = await secretsManager.getSecretValue({
-    SecretId: passwordSecretArn,
-  }).promise();
+  const secretValue = await secretsManager.send(
+      new GetSecretValueCommand({
+      SecretId: passwordSecretArn,
+    })
+  )
+  
   const secretString = secretValue.SecretString;
   if (!secretString) {
     throw new Error(`Secret string for ${passwordSecretArn} was empty`);
