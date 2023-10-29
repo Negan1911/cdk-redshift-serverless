@@ -35,7 +35,7 @@ export class DatabaseQuery<HandlerProps> extends Construct implements iam.IGrant
       code: lambda.Code.fromAsset(path.join(__dirname, 'database-query-provider'), {
         exclude: ['*.ts'],
       }),
-      runtime: builtInCustomResourceNodeRuntime(this),
+      runtime: lambda.Runtime.NODEJS_18_X,
       handler: 'index.handler',
       timeout: cdk.Duration.minutes(1),
       uuid: '3de5bea7-27da-4796-8662-5efb56431b5f',
